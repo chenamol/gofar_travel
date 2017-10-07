@@ -30,6 +30,8 @@ CREATE UNDO TABLESPACE UNDOTBS DATAFILE
 ALTER TABLESPACE UNDOTBS DATAFILE ONLINE;
 
 
-Favor continuar con creación de usuarios.
+Favor continuar con creación de usuarios punto 4.
+
+Gracias.
 
 
