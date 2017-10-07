@@ -30,8 +30,19 @@ CREATE UNDO TABLESPACE UNDOTBS DATAFILE
 ALTER TABLESPACE UNDOTBS DATAFILE ONLINE;
 
 
-Favor continuar con creación de usuarios punto 4.
+--4. Crear un usuario de DBA y asignarlo al espacio de tablas llamado "gofar_travel", este usuario tiene espacio ilimitado
+en el espacio de tablas 
 
-Gracias.
+ALTER SESSION SET "_ORACLE_SCRIPT"=true;
+Drop user greison cascade;
+Select * from all_users;
 
+CREATE USER greison
+IDENTIFIED BY elporte1985 
+DEFAULT TABLESPACE gofar_travel
+QUOTA  UNLIMITED ON gofar_travel;
+
+Continuar con el punto 5 
+
+Bibi i love
 
