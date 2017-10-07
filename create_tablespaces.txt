@@ -79,3 +79,46 @@ SESSIONS_PER_USER 2
 CONNECT_TIME 30
 PASSWORD_LIFE_TIME 100;
 
+--7. Crear 4 usuarios, asignarles el espacio de tablas "gofar_travel"; perfiles creados deben ser utilizados para usuarios, todos los usuarios deben permitir conectarse a la base de datos.
+
+CREATE USER BIBIANA
+IDENTIFIED BY bibi2017
+DEFAULT TABLESPACE gofar_travel
+QUOTA UNLIMITED ON gofar_travel
+PROFILE MANAGER;
+GRANT CONNECT TO BIBIANA;
+
+
+CREATE USER CESAR
+IDENTIFIED BY cesar2017
+DEFAULT TABLESPACE gofar_travel
+QUOTA UNLIMITED ON gofar_travel
+PROFILE DEVELOPMENT;
+GRANT CONNECT TO CESAR;
+
+CREATE USER CONSULTA
+IDENTIFIED BY consulta2017
+DEFAULT TABLESPACE gofar_travel
+QUOTA UNLIMITED ON gofar_travel
+PROFILE FINANCE;
+GRANT CONNECT TO CONSULTA;
+
+CREATE USER ANDRES
+IDENTIFIED BY andres2017
+DEFAULT TABLESPACE gofar_travel
+QUOTA UNLIMITED ON gofar_travel
+PROFILE DEVELOPMENT;
+GRANT CONNECT TO ANDRES;
+
+--8. Bloquear los usuarios asociados con los perfiles: manager y finance.
+
+ALTER USER BIBIANA ACCOUNT LOCK;
+ALTER USER CONSULTA ACCOUNT LOCK;
+
+--8.1. Desbloquear 
+ALTER USER BIBIANA ACCOUNT UNLOCK;
+ALTER USER CONSULTA ACCOUNT UNLOCK;
+
+--9. Elimine el espacio de tablas denominado "test_purposes" 
+
+DROP TABLESPACE TEST_PURPOSES INCLUDING CONTENTS;
