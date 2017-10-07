@@ -51,5 +51,31 @@ GRANT DBA TO GREISON;
 --5.2. Permisos para conectarse 
 GRANT CONNECT TO GREISON;
 
+--6. Cree 3 perfiles:
 
+select *  from   dba_profiles;
+--a. Perfil 1: "Manager": Tiempo de una sesión por usuario, 40 días de duración de la contraseña, 15 mins inactivo, 4 intentos fallidos para inicio de sesión.
+
+CREATE PROFILE MANAGER LIMIT
+SESSIONS_PER_USER 1
+CONNECT_TIME 15
+PASSWORD_LIFE_TIME 40  
+FAILED_LOGIN_ATTEMPTS 4;
+
+
+--b. Perfil 2: "finance": Tiempo de una sesión por usuario, 15 días de duración de la contraseña, 3 mins inactivo, 2 intentos fallidos para inicio de sesión.
+
+CREATE PROFILE FINANCE LIMIT
+SESSIONS_PER_USER 1
+CONNECT_TIME 3
+PASSWORD_LIFE_TIME 15
+FAILED_LOGIN_ATTEMPTS 2;
+
+
+--c. Perfil 2: "development": Tiempo de dos sesión por usuario, 100 días de duración de la contraseña, 30 mins inactivo, 0 intentos fallidos para inicio de sesión.
+
+CREATE PROFILE DEVELOPMENT LIMIT
+SESSIONS_PER_USER 2
+CONNECT_TIME 30
+PASSWORD_LIFE_TIME 100;
 
