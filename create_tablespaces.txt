@@ -42,7 +42,14 @@ IDENTIFIED BY elporte1985
 DEFAULT TABLESPACE gofar_travel
 QUOTA  UNLIMITED ON gofar_travel;
 
-Continuar con el punto 5 
 
-Bibi i love
+--5. Asigne el rol de DBA y los permisos para conectarse al usuario que acaba de crear.
+
+--5.1. Asigne el rol de DBA
+GRANT DBA TO GREISON; 
+
+--5.2. Permisos para conectarse 
+GRANT CONNECT TO GREISON;
+
+
 
