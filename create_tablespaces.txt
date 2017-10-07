@@ -1,0 +1,35 @@
+﻿--- SOLUCIÓN TALLER 
+
+--2. Crear 3 espacios de tabla (0.2):
+--a. primero con 1 Gb y 3 archivos de datos, el espacio de tablas debe ser llamado "gofar_travel"
+
+CREATE TABLESPACE GOFAR_TRAVEL DATAFILE
+'C:\Oracle11g\database\archive\gofar_travel.dbf' SIZE 500M, 
+'C:\Oracle11g\database\archive\gofar_trave2.dbf' SIZE 300M,
+'C:\Oracle11g\database\archive\gofar_trave3.dbf' SIZE 200M
+AUTOEXTEND ON NEXT 500M MAXSIZE 1G
+EXTENT MANAGEMENT LOCAL
+SEGMENT SPACE MANAGEMENT AUTO
+ONLINE;
+
+--b. el segundo con 500 Mb y 1 archivo de datos, llamado "test_purposes". 
+
+CREATE TABLESPACE TEST_PURPOSES DATAFILE
+'C:\OracleGreisonPemberty\product\12.2.0\dbhome_2\oradata\sample\test_purposes.dbf' SIZE 500M 
+AUTOEXTEND ON NEXT 100M MAXSIZE 500M
+EXTENT MANAGEMENT LOCAL
+SEGMENT SPACE MANAGEMENT AUTO
+ONLINE;                                          
+
+--c. Undo TABLESPACE con 5Mb de espacio y 1 archivo de datos
+CREATE UNDO TABLESPACE UNDOTBS DATAFILE
+'C:\OracleGreisonPemberty\product\12.2.0\dbhome_2\oradata\sample\undotbs.dbf' SIZE 5M ;
+
+
+--3. Establezca el  undo tablespace que se va a utilizar en el system
+ALTER TABLESPACE UNDOTBS DATAFILE ONLINE;
+
+
+Favor continuar con creación de usuarios.
+
+
