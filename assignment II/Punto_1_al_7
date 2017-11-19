@@ -1,11 +1,13 @@
-﻿SE MODIFICA LA TABLA DETALLE DE FACTURAS CON EL FIN DE INCLUIR LA CANTIDAD DE PARTES VENDIDAS 
+﻿--1. El propietario del producto ha solicitado un par de cambios en su diseño original, el primero es que quieren implementar algún tipo de datos históricos para los vehículos, lo que --significa que quieren tener la capacidad de rastrear cuando un vehículo entra / sale, por ejemplo:
+--El vehículo 1 se vendió el 10/5/2017 y está asociado a la factura xxx, el vehículo 10 se recibió como parte de una negociación asociada a la factura xxx, el vehículo 100 es nuevo y --llegó a venderse y no tiene facturas asociadas.
+--También piden una columna que SOLO acepta valores: "NUEVO", "COMERCIO", "VENDIDO". (0.5)
+
+1.1. SE MODIFICA LA TABLA DETALLE DE FACTURAS CON EL FIN DE INCLUIR LA CANTIDAD DE PARTES VENDIDAS 
 
 ALTER TABLE DETALLE_FACTURAS 
 ADD CANTIDAD_PARTES NUMBER(10); 
 
-PUNTO 1 
-
-SE CREA LA TABLA LOG DE HISTORICO_VEHICULOS PARA CONTROLAR LOS VEHICULOS QUE ENTRAN Y SALEN 
+1.2. SE CREA LA TABLA LOG DE HISTORICO_VEHICULOS PARA CONTROLAR LOS VEHICULOS QUE ENTRAN Y SALEN 
 
 CREATE TABLE HISTORICO_VEHICULOS
 (ID NUMBER(10) GENERATED AS IDENTITY NOT NULL, 
@@ -16,7 +18,7 @@ CREATE TABLE HISTORICO_VEHICULOS
  ESTADO VARCHAR(10),
  CONSTRAINT HISTORICO_PK PRIMARY KEY (ID));
 
-SE CREAR TRIGGER PARA ACTUALIZAR EL LOG CUANDO INGRESE VEHICULO NUEVO
+1.3. SE CREAR TRIGGER PARA ACTUALIZAR EL LOG CUANDO INGRESE VEHICULO NUEVO
 
 CREATE OR REPLACE TRIGGER "TR_UPDATE_HISTORY" 
   AFTER INSERT ON VEHICULOS_NUEVOS
@@ -26,19 +28,15 @@ BEGIN
   VALUES (HISTORICO_VEHICULOS_SEQUENCE.NEXTVAL,:new.id,0,0,0,SYSDATE,'NUEVO') ;
 END; 
 
-
 Insert into VEHICULOS_NUEVOS (VIN,ID_MARCA,MODELO,ID_FABRICA,ESTADO) 
 values ('2655','08','2017','7','NUEVO');
 
-
-
-SE ADICIONA EL CAMPO BILL_CLIENTE PARA TENER CONTROL DEL CLIENTE CON EL QUE SE NEGOCIÓ EL VEHICULO EN PARTE DE PAGO 
+1.4. SE ADICIONA EL CAMPO BILL_CLIENTE PARA TENER CONTROL DEL CLIENTE CON EL QUE SE NEGOCIÓ EL VEHICULO EN PARTE DE PAGO 
 
 ALTER TABLE HISTORICO_VEHICULOS
 ADD BILL_CLIENTE NUMBER(12);
 
-
-SE CREA TRIGGER PARA ACTUALIZAR EL LOG CUANDO INGRESE VEHICULO USADO
+1.5. SE CREA TRIGGER PARA ACTUALIZAR EL LOG CUANDO INGRESE VEHICULO USADO
 
 CREATE OR REPLACE TRIGGER "TR_UPDATE_HISTORY_VU" 
   AFTER INSERT ON VEHICULOS_USADOS
@@ -48,13 +46,10 @@ BEGIN
   VALUES (0,:new.id,0,:new.ID_VEHICULO_CLIENTE,SYSDATE,'USADO') ;
 END; 
 
-
-
 Insert into VEHICULOS_USADOS (VIN,ID_MARCA,MODELO,ID_FABRICA,ESTADO,ID_VEHICULO_CLIENTE) 
 values ('800001','20','2018','7','USADO','3');
 
-
-SE CREA TRIGGER PARA ACTUALIZAR EL LOG CUANDO SE REALICE LA VENTA DE UN VEHICULO NUEVO O USADO 
+1.6. SE CREA TRIGGER PARA ACTUALIZAR EL LOG CUANDO SE REALICE LA VENTA DE UN VEHICULO NUEVO O USADO 
 
 CREATE OR REPLACE TRIGGER "TR_UPDATE_HISTORY_FACTURAS" 
   AFTER INSERT ON FACTURAS
@@ -85,19 +80,36 @@ BEGIN
   VALUES (v_VehiculoN,v_VehiculoU,:new.NRO_FACTURA,:new.ID_CLIENTE,SYSDATE,Estado) ;
 END; 
 
-
-
 Insert into FACTURAS (NRO_FACTURA,ID_CLIENTE,ID_VENDEDOR,ID_VEHICULO_NUEVO,ID_VEHICULO_USADO,
 VALOR_NEGOCIACION,FECHA,SUBTOTAL,IMPUESTOS,TOTAL) 
 values ('1000000036','50','10',0,'13','15000000',to_date('09/07/17','DD/MM/RR'),'25000000','245000','25245000');
-
-
 
 Insert into FACTURAS (NRO_FACTURA,ID_CLIENTE,ID_VENDEDOR,ID_VEHICULO_NUEVO,ID_VEHICULO_USADO,
 VALOR_NEGOCIACION,FECHA,SUBTOTAL,IMPUESTOS,TOTAL) 
 values ('1000000036','50','10',0,'18','25000000',to_date('18/11/17','DD/MM/RR'),'25000000','245000','25245000');
 
+--2. El segundo cambio es manejar algún tipo de inventario para accesorios, la tabla donde almacena esos objetos debe tener una columna 
+--"units_available" o "unidades_disponibles" (si usted hizo el diagrama en español). El valor predeterminado para esa columna es 30 (0.5)
+ 
+ALTER TABLE PARTEVEHICULOS 
+ADD UNIDADES_DISPONIBLES NUMBER(30) DEFAULT 30;
 
+-- 3. Cree una vista para mostrar los productos que tienen menos de 5 unidades disponibles, la vista debería
+-- tener la identificación, el nombre del producto, el código y el nombre del fabricante. (0.5)
+
+ALTER TABLE PARTEVEHICULOS 
+ADD ID_FABRICANTE NUMBER(10);
+
+ALTER TABLE PARTEVEHICULOS 
+ADD CONSTRAINT FABRICANTES_PARTES_FK
+FOREIGN KEY (ID_FABRICANTE) 
+REFERENCES  FABRICANTES (ID); 
+
+CREATE OR REPLACE VIEW PRODUCTO_MENOS_DE_CINCO_DISPONIBLE
+AS
+SELECT PAR.ID, PAR.DESCRIPCION AS DESC_PARTE, PAR.COD_PARTE, FA.DESCRIPCION AS DESC_FABRICANTE
+FROM PARTEVEHICULOS PAR INNER JOIN FABRICANTES FA ON PAR.ID_FABRICANTE=FA.ID
+WHERE PAR.UNIDADES_DISPONIBLES<5;
 
 --4. Cree un disparador que disminuya la cantidad de unidades disponibles después de que el producto haya sido asociado a una factura (0.5)
 
@@ -120,7 +132,6 @@ COMMIT;
 -- 5. Cree un procedimiento llamado "reorder_units", dentro del procedimiento que debe llamar a la vista creada en el paso # 3,
 -- para cada elemento devuelto, el valor de "units_available" debe aumentarse en 20 unidades de forma predeterminada. (0.5)
 
-
 CREATE OR REPLACE PROCEDURE "REORDER_UNITS" 
 AS
   LV_TEST_CUR SYS_REFCURSOR;
@@ -132,7 +143,6 @@ BEGIN
 END REORDER_UNITS;
 
 EXECUTE REORDER_UNITS;
-
 
 -- 6. Cree una vista con las siguientes columnas (bill_id, sales_person_id, name_of_salesperson, client_id, name_of_client, 
 -- vehicle_id, brand_of_vehicle, manufacturer_of_vehicle, accesory_id, name_of_accesory).
@@ -152,8 +162,55 @@ INNER JOIN FABRICANTES FAB ON FAB.ID=VN.ID_FABRICA
 INNER JOIN DETALLE_FACTURAS DF ON FA.ID= DF.NRO_FACTURA
 INNER JOIN PARTEVEHICULOS PV ON PV.ID=DF.COD_PARTE;
 
-
 SELECT * FROM DETALLE_FACTURA_COMPRA
 WHERE NRO_FACTURA= ;
+
+-- 7. Cree el plan de explicación para el último paso (agregue una captura de pantalla o copie y pegue la información devuelta) (0.5)
+
+EXPLAIN PLAN 
+  SET STATEMENT_ID = 'DETALLE_FACTURAS' FOR
+SELECT FA.NRO_FACTURA, VE.IDENTIFICACION AS IDENT_VENDEDOR, VE.NOMBRE AS NOM_VENDEDOR, VE.APELLIDO APE_VENDEDOR, CLI.IDENTIFICACION AS IDENT_CLIENTE, 
+CLI.NOMBRE AS NOM_CLIENTE, CLI.APELLIDO AS APE_CLIENTE, VN.VIN AS VEH_NUEVO, FA.ID_VEHICULO_USADO AS VEH_USADO, MA.DESCRIPCION AS DESC_MARCA, 
+FAB.DESCRIPCION AS DESC_FABRICANTE, PV.ID AS ID_FABRICANTE, PV.DESCRIPCION AS DESC_ACCESORIO
+FROM FACTURAS FA INNER JOIN VENDEDORES VE ON VE.ID=ID_VENDEDOR
+INNER JOIN CLIENTES CLI ON CLI.ID=FA.ID_CLIENTE
+INNER JOIN VEHICULOS_NUEVOS VN ON FA.ID_VEHICULO_NUEVO= VN.ID
+INNER JOIN MARCAS MA ON MA.ID=VN.ID_MARCA 
+INNER JOIN FABRICANTES FAB ON FAB.ID=VN.ID_FABRICA
+INNER JOIN DETALLE_FACTURAS DF ON FA.ID= DF.NRO_FACTURA
+INNER JOIN PARTEVEHICULOS PV ON PV.ID=DF.COD_PARTE;
+  
+SELECT PLAN_TABLE_OUTPUT 
+  FROM TABLE(DBMS_XPLAN.DISPLAY(NULL, 'DETALLE_FACTURAS','BASIC'));
+
+-----------------------------------------------------
+| Id  | Operation                | Name             |
+-----------------------------------------------------
+|   0 | SELECT STATEMENT         |                  |
+|   1 |  HASH JOIN               |                  |
+|   2 |   TABLE ACCESS FULL      | FABRICANTES      |
+|   3 |   HASH JOIN              |                  |
+|   4 |    HASH JOIN             |                  |
+|   5 |     HASH JOIN            |                  |
+|   6 |      HASH JOIN           |                  |
+|   7 |       HASH JOIN          |                  |
+|   8 |        HASH JOIN         |                  |
+|   9 |         TABLE ACCESS FULL| VENDEDORES       |
+|  10 |         TABLE ACCESS FULL| FACTURAS         |
+|  11 |        TABLE ACCESS FULL | DETALLE_FACTURAS |
+|  12 |       TABLE ACCESS FULL  | PARTEVEHICULOS   |
+|  13 |      TABLE ACCESS FULL   | CLIENTES         |
+|  14 |     TABLE ACCESS FULL    | VEHICULOS_NUEVOS |
+|  15 |    TABLE ACCESS FULL     | MARCAS           |
+-----------------------------------------------------
+
+ 
+ 
+
+
+
+
+
+
 
 
